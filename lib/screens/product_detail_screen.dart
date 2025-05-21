@@ -4,16 +4,15 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ProductDetailScreen extends StatelessWidget {
-  final int productId;
-
-  const ProductDetailScreen({super.key, required this.productId});
+  final Product product;
+  const ProductDetailScreen({super.key, required this.product});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Detalle del Producto')),
+      appBar: AppBar(title: Text(product.title)),
       body: FutureBuilder<Product>(
-        future: fetchProductDetail(productId),
+        future: fetchProductDetail(product.id),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());

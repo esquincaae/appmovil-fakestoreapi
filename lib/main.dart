@@ -1,12 +1,27 @@
 import 'package:flutter/material.dart';
 import 'data/products.dart';
-import 'screens/product_detail_screen.dart';
 import '../models/product.dart';
 import '../widgets/product_card.dart';
 import '../screens/cart_screens.dart';
+import	'package:firebase_core/firebase_core.dart';
+import	'package:firebase_auth/firebase_auth.dart';
+import	'screens/home_screen.dart';
+import	'screens/login_screen.dart';
 
-void main() {
-  runApp(MyApp());
+void	main()	async	{
+  WidgetsFlutterBinding.ensureInitialized();
+  await	Firebase.initializeApp(
+    options: FirebaseOptions(apiKey: "XXX",
+                              appId: "XXX",
+                              messagingSenderId: "XXX",
+                              projectId: "XXX"
+    ),
+  );
+  final	user = FirebaseAuth.instance.currentUser;
+  runApp(MaterialApp(
+    debugShowCheckedModeBanner:	false,
+    home:	user	==	null	?	LoginScreen()	:	HomeScreen(userData:	user),
+  ));
 }
 
 class MyApp extends StatelessWidget {
