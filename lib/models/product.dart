@@ -3,7 +3,7 @@ class Product {
   final String title;
   final String description;
   final double price;
-  final String image;
+  final String image;  // aquí usaremos thumbnail
 
   Product({
     required this.id,
@@ -16,10 +16,10 @@ class Product {
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
       id: json['id'],
-      title: json['title'],
-      description: json['description'],
+      title: json['title'] ?? 'Sin título',
+      description: json['description'] ?? '',
       price: (json['price'] as num).toDouble(),
-      image: json['image'],
+      image: json['image'] ?? '',
     );
   }
 }
