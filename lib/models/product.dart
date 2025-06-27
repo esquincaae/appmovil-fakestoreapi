@@ -3,7 +3,7 @@ class Product {
   final String title;
   final String description;
   final double price;
-  final String image;  // aquí usaremos thumbnail
+  final String image;
 
   Product({
     required this.id,

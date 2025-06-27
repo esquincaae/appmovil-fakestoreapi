@@ -23,7 +23,7 @@ class HomeScreen extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => CartScreen()), // Asegúrate de tener esta pantalla creada
+                MaterialPageRoute(builder: (_) => CartScreen()),
               );
             },
           ),

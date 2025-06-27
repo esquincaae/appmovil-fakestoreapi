@@ -10,17 +10,14 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
   final userController = TextEditingController();
   final passController = TextEditingController();
   String error = '';
   bool isLoading = false;
 
-  // Login con email y contraseña usando Firebase
   Future<void> loginWithCredentials() async {
-    if (userController.text.isEmpty || passController.text.isEmpty) {
-      setState(() => error = 'Por favor ingresa correo y contraseña');
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() {
       isLoading = true;
@@ -37,9 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (user != null) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => HomeScreen(),
-          ),
+          MaterialPageRoute(builder: (_) => HomeScreen()),
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -49,7 +44,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // Login con Google usando Firebase
   Future<void> loginWithGoogle() async {
     setState(() {
       isLoading = true;
@@ -60,26 +54,23 @@ class _LoginScreenState extends State<LoginScreen> {
       final googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) {
         setState(() => isLoading = false);
-        return; // El usuario canceló
+        return;
       }
 
       final googleAuth = await googleUser.authentication;
-
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      final userCredential =
-      await FirebaseAuth.instance.signInWithCredential(credential);
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(
+          credential);
 
       final user = userCredential.user;
       if (user != null) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => HomeScreen(),
-          ),
+          MaterialPageRoute(builder: (_) => HomeScreen()),
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -92,6 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFF1F4F8),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Center(
@@ -99,64 +91,136 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.network(
-                  'https://fakestoreapi.com/icons/logo.png',
+                Image.asset(
+                  'assets/images/image_Login.png',
                   height: 100,
                   errorBuilder: (context, error, stackTrace) =>
                       Icon(Icons.image_not_supported, size: 100),
                 ),
                 SizedBox(height: 20),
-
-                TextField(
-                  controller: userController,
-                  decoration: InputDecoration(labelText: 'Correo electrónico'),
+                Text(
+                  'Iniciar Sesión',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
-                TextField(
-                  controller: passController,
-                  obscureText: true,
-                  decoration: InputDecoration(labelText: 'Contraseña'),
+                SizedBox(height: 40),
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: userController,
+                        decoration: InputDecoration(
+                          labelText: 'Correo electrónico',
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(color: Color(0xFFE0E3E7)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(color: Colors.blue, width: 2),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(color: Colors.red),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(color: Colors.red, width: 2),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Por favor ingresa tu correo';
+                          }
+                          if (!value.contains('@')) {
+                            return 'Ingresa un correo válido';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 20),
+                      TextFormField(
+                        controller: passController,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          labelText: 'Contraseña',
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(color: Color(0xFFE0E3E7)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(color: Colors.blue, width: 2),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(color: Colors.red),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: BorderSide(color: Colors.red, width: 2),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Por favor ingresa tu contraseña';
+                          }
+                          if (value.length < 8) {
+                            return 'La contraseña debe tener al menos 8 caracteres';
+                          }
+                          return null;
+                        },
+                      ),
+                      SizedBox(height: 30),
+                      ElevatedButton(
+                        onPressed: loginWithCredentials,
+                        child: Text('Iniciar Sesión'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: EdgeInsets.symmetric(horizontal: 50, vertical: 16),
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('¿No tienes cuenta? '),
+                          TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => RegisterScreen()),
+                                );
+                              },
+                              child: Text(
+                                  'Regístrate aquí',
+                                  style: TextStyle(
+                                    color: Colors.blue,
+                                    fontWeight: FontWeight.bold
+                                  )
+                              ),
+                          )
+                        ],
+                      )
+                      ,
+                      if (error.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 20),
+                          child: Text(error, style: TextStyle(color: Colors.red)),
+                        ),
+                    ],
+                  ),
                 ),
-                SizedBox(height: 20),
-                if (isLoading)
-                  CircularProgressIndicator()
-                else ...[
-                  ElevatedButton(
-                    onPressed: loginWithCredentials,
-                    child: Text('Iniciar Sesión'),
-                  ),
-                  SizedBox(height: 20),
-                  ElevatedButton.icon(
-                    onPressed: loginWithGoogle,
-                    icon: Image.network(
-                      'https://img.icons8.com/color/48/google-logo.png',
-                      height: 24,
-                      width: 24,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Icon(Icons.error, color: Colors.white);
-                      },
-                    ),
-                    label: Text('Iniciar con Google'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
-                      elevation: 2,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => RegisterScreen()), // Esta pantalla debe existir
-                      );
-                    },
-                    child: Text("¿No tienes cuenta? Regístrate aquí"),
-                  ),
-                ],
-                if (error.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 20),
-                    child: Text(error, style: TextStyle(color: Colors.red)),
-                  ),
               ],
             ),
           ),

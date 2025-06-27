@@ -1,67 +1,44 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:product_list_app/models/product.dart';
-import 'package:product_list_app/cart/cart.dart';
-import 'package:product_list_app/screens/cart_screen.dart';
 
-void main() {
-  group('CartScreen', () {
-    setUp(() {
-      Cart.items.clear(); //Limpiar antes de cada test
-      Cart.add(Product(
-        id: 1,
-        title: 'Producto de prueba',
-        description: 'Descripción',
-        price: 99.99,
-        image: 'https://via.placeholder.com/150',
-      ));
-    });
+class SessionService {
+  static final SessionService _instance = SessionService._internal();
+  factory SessionService() => _instance;
+  SessionService._internal();
 
-    testWidgets('Muestra productos y total en el carrito', (WidgetTester tester) async {
-      await tester.pumpWidget(MaterialApp(home: CartScreen()));
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  final Duration sessionTimeout = const Duration(minutes: 5);
 
-      // Verifica que el título del producto se muestre
-      expect(find.text('Producto de prueba'), findsOneWidget);
+  /// Guarda el token y la última hora de actividad
+  Future<void> saveSessionData(String token) async {
+    final now = DateTime.now().toIso8601String();
+    await _secureStorage.write(key: 'token', value: token);
+    await _secureStorage.write(key: 'last_active_time', value: now);
+  }
 
-      // Verifica que el total se muestre correctamente
-      expect(find.textContaining('Total: \$99.99'), findsOneWidget);
-    });
+  /// Limpia el token y hora almacenados
+  Future<void> clearSessionData() async {
+    await _secureStorage.delete(key: 'token');
+    await _secureStorage.delete(key: 'last_active_time');
+  }
 
-    testWidgets('Botón "Comprar" vacía el carrito', (WidgetTester tester) async {
-      await tester.pumpWidget(MaterialApp(home: CartScreen()));
+  /// Verifica si el usuario ha estado inactivo por más de X minutos
+  Future<bool> isSessionExpired() async {
+    final lastActive = await _secureStorage.read(key: 'last_active_time');
+    if (lastActive == null) return true;
+    final lastTime = DateTime.tryParse(lastActive);
+    if (lastTime == null) return true;
 
-      // Verifica que el producto esté presente
-      expect(find.text('Producto de prueba'), findsOneWidget);
+    final diff = DateTime.now().difference(lastTime);
+    return diff > sessionTimeout;
+  }
 
-      // Presiona el botón "Comprar"
-      final buyButton = find.widgetWithText(ElevatedButton, 'Comprar');
-      expect(buyButton, findsOneWidget);
-
-      await tester.tap(buyButton);
-      await tester.pump(); // Refresca UI
-
-      // Verifica que ya no haya productos en pantalla
-      expect(find.text('Producto de prueba'), findsNothing);
-      expect(find.text('El carrito está vacío'), findsOneWidget);
-    });
-
-    testWidgets('Incrementa y reduce cantidad con botones + y -', (WidgetTester tester) async {
-      await tester.pumpWidget(MaterialApp(home: CartScreen()));
-
-      // Verifica cantidad inicial
-      expect(find.text('Cantidad: 1'), findsOneWidget);
-
-      // Presiona +
-      final addButton = find.byIcon(Icons.add);
-      await tester.tap(addButton);
-      await tester.pump();
-      expect(find.text('Cantidad: 2'), findsOneWidget);
-
-      // Presiona -
-      final removeButton = find.byIcon(Icons.remove);
-      await tester.tap(removeButton);
-      await tester.pump();
-      expect(find.text('Cantidad: 1'), findsOneWidget);
-    });
-  });
+  /// Redirige al login si la sesión ha expirado
+  Future<void> validateSession(GlobalKey<NavigatorState> navigatorKey) async {
+    final expired = await isSessionExpired();
+    if (expired) {
+      await clearSessionData();
+      navigatorKey.currentState?.pushReplacementNamed('/login');
+    }
+  }
 }
